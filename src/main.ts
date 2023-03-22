@@ -26,6 +26,6 @@ async function bootstrap() {
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   }));
 
-  await app.listen(3000);
+  await app.listen(4002);
 }
 bootstrap();
