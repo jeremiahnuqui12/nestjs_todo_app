@@ -1,7 +1,7 @@
 import { Controller, Get, Req, Param, Render, Post, Res, HttpStatus, Session, Redirect, Next } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserEntity } from './user.entity/user.entity';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Controller('/')
 export class UsersController {

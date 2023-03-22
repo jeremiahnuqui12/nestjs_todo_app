@@ -9,8 +9,13 @@ async function bootstrap() {
     AppModule,
   );
   app.useStaticAssets(join(__dirname, '..', 'public'));
-  app.useStaticAssets(join(__dirname, '..', 'node_modules'));
-  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.useStaticAssets(join(__dirname, '..', 'node_modules/bootstrap'),{
+    prefix: '/bootstrap/',
+  });
+  app.useStaticAssets(join(__dirname, '..', 'node_modules/jquery'),{
+    prefix: '/jquery/',
+  });
+  app.setBaseViewsDir(join(__dirname, '..', 'views'), );
   app.setViewEngine('ejs');
   app.use(
     session({
@@ -26,6 +31,6 @@ async function bootstrap() {
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   }));
 
-  await app.listen(4002);
+  await app.listen(4002, '0.0.0.0');
 }
 bootstrap();
