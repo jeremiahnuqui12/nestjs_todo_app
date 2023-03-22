@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/bootstrap/dist/css/bootstrap.min.css">
+    <title>To do list</title>
+    <script src="/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="/jquery/dist/jquery.min.js"></script>
+</head>
+<body class="bg-dark">
+    <div class="container bg-white p-5">
+        <div class="col-10 mx-auto mh-100 d-inline-block">
+            <div class="login-data fw-bold">
+                Logged-in as : 
+            </div>
+            <div>
+                <a href="/logout">Logout</a>
+            </div>
+            <div class="m-5">
+                <h1>TASK LIST</h1>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm create-task">Create Task</button>
+        <div class="ms-3 me-3">
+            <table id="task-list" class="table table-bordered">
+                <thead>
+                    <tr class="text-center">
+                        <th></th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Date Created</th>
+                        <th>Action</th>
+                    </tr>                    
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <form id="taskForm" action="">
+        <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">Task Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 row">
+                        <label for="title" class="col-sm-3 col-form-label">Title: </label>
+                        <div class="col-sm-9">
+                          <input type="text" class="form-control" id="title">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="description" class="col-sm-3 col-form-label">Description: </label>
+                        <div class="col-sm-9">
+                          <input type="text" class="form-control" id="description">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+            </div>
+        </div>
+    </form>
+
+
+    
+    <div class="toast position-absolute top-0 end-0 m-5" style="z-index:5000" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header text-white">
+          <strong class="me-auto">Bootstrap</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+        </div>
+    </div>
+    <script>
+        let user_details = JSON.parse(`<%- JSON.stringify(data) %>`);
+        $(".login-data").text("Logged-in as: " + user_details.username)
+        $(function(){
+            let allTask = [];
+            $(document.body).on('click', '.create-task', function(){
+                $("#taskModal").modal("show")
+                $("#taskModal .modal-content .modal-title").text("Create Task");
+                $("#taskModal .modal-footer button[type='submit']").text("Create");
+                $("#taskForm").attr({action:"/task/create", method:"POST"})
+                $("#taskForm")[0].reset();
+            })
+            $(document.body).on('click', '.update-task', function(){
+                let id = $(this).attr("value");
+                let task_data = allTask.filter(x=>x.id==id);
+                console.log(task_data)
+                $("#taskModal").modal("show")
+                $("#taskModal .modal-content .modal-body #title").val(task_data[0].title);
+                $("#taskModal .modal-content .modal-body #description").val(task_data[0].description);
+                $("#taskModal .modal-content .modal-title").text("Update Task");
+                $("#taskModal .modal-footer button[type='submit']").text("Update");
+                $("#taskForm").attr({action:"/task/update/"+id, method:"PATCH"})
+            })
+            $(document.body).on('click', '.delete-task', function(){
+                let id = $(this).attr("value");
+                let task_data = allTask.filter(x=>x.id==id);
+                console.log(task_data)
+                let delete_task = confirm("Delete task " + task_data[0].title);
+                if(delete_task) {
+                    fetch('/task/delete/' + id,{
+                        method: "DELETE",
+                        headers:{
+                            "Content-Type": "application/json"
+                        }
+                    })
+                    .then(res=>res.json())
+                    .then(json=>{
+                        if(json.status == "SUCCESS") {
+                            showToast("SUCCESS", json.description) 
+                            $("#taskModal").modal("hide");
+                            // setTimeout(() => {
+                                getAllTask();
+                            // }, 1000);
+                        } else if(json.status == "FAILED") {
+                            showToast("ERROR", json.description) 
+                        } else {
+                            showToast("ERROR", json.description.join("<br/>")) 
+                        }
+                        console.log(json)
+                    })
+                }
+            })
+            $("#taskForm").submit(function(e){
+                fetch($(this).attr("action"),{
+                    method:$(this).attr("method"),
+                    body:JSON.stringify({
+                        title: $("#taskModal .modal-content .modal-body #title").val(),
+                        description: $("#taskModal .modal-content .modal-body #description").val(),
+                    }),
+                    headers:{
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res=>res.json())
+                .then(json=>{
+                    if(json.status == "SUCCESS") {
+                        showToast("SUCCESS", json.description) 
+                        $("#taskModal").modal("hide");
+                        getAllTask();
+                    } else if(json.status == "FAILED") {
+                        showToast("ERROR", json.description) 
+                    } else {
+                        showToast("ERROR", json.description.join("<br/>")) 
+                    }
+                    console.log(json)
+                })
+                e.preventDefault();
+            })
+            const getAllTask = () => {
+                let table_div = $("#task-list tbody");
+                fetch('/task/data')
+                .then(res=>res.json())
+                .then(json=>{
+                    table_div.empty()
+                    if(json.length == 0) {
+                        table_div.append(
+                            $("<tr>").addClass('text-center').append(
+                                $("<td>").attr("colspan", 5).text("No Data Found")
+                            )
+                        )
+                        return false
+                    }
+                    let row_no = 1;
+                    allTask = json;
+                    json.map(x=>{
+                        table_div.append(
+                            $("<tr>").addClass('text-center').append(
+                                $("<td>").text(row_no),
+                                $("<td>").text(x.title),
+                                $("<td>").text(x.description),
+                                $("<td>").text(x.date_created),
+                                $("<td>").append(
+                                    $("<button>").attr({
+                                        type: "button",
+                                        class: 'btn btn-outline-primary btn-sm update-task m-1 me-1',
+                                        value: x.id
+                                    }).text("Update"),
+                                    $("<button>").attr({
+                                        type: "button",
+                                        class: 'btn btn-outline-danger btn-sm delete-task m-1 me-1',
+                                        value: x.id
+                                    }).text("Delete")
+                                )
+                            )
+                        );
+                        row_no++;
+                    })
+                })
+            }
+
+            getAllTask();
+        })
+        function showToast(title, params) {
+            $(".toast .toast-header").removeClass('bg-danger bg-success')
+            $(".toast .toast-header").addClass(title != 'SUCCESS' ? 'bg-danger':'bg-success')
+            $(".toast .toast-header strong").text(title);
+            $(".toast .toast-body").html(params);
+            $(".toast").show();
+            setTimeout(()=>{
+                $(".toast").hide();
+            }, 3000)
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/bootstrap/dist/css/bootstrap.min.css">
+    <title>Login</title>
+    <script src="/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="/jquery/dist/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="col-7 mx-auto" id="register">
+            <div>
+                <h1>Register page</h1>
+            </div>
+            <div class="m-3">
+                <a href="/login">Login Page here</a>
+            </div>
+            <form id="registerForm">
+                <div class="mb-3 row">
+                    <label for="username" class="col-sm-2 col-form-label">Username</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="username">
+                    </div>
+                </div>
+                <div class="mb-3 row">
+                    <label for="password" class="col-sm-2 col-form-label">Password</label>
+                    <div class="col-sm-10">
+                      <input type="password" class="form-control" id="password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">Register</button>
+            </form>
+            
+        </div>
+    </div>
+    <div class="toast position-absolute top-0 end-0 m-5" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header text-white">
+          <strong class="me-auto"></strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+        </div>
+    </div>
+    <script>
+        $(function(){
+            $("#register div input#username").focus();
+            $("#registerForm").submit(function(e){
+                const username = $("#register div input#username").val();
+                const password = $("#register div input#password").val();
+                fetch('/register', {
+                    method:"POST",
+                    body: JSON.stringify({
+                        username:username,
+                        password:password,
+                    }),
+                    headers: {
+                        'Content-type': 'application/json'
+                    }
+                })
+                .then(res=>res.json())
+                .then(json=>{
+                    if(json.status == "SUCCESS") {
+                        showToast("SUCCESS", json.description) 
+                        window.location.href = "/login"
+                    } else if(json.status == "FAILED") {
+                        showToast("ERROR", json.description) 
+                    } else {
+                        showToast("ERROR", json.description.join("<br/>")) 
+                    }
+                    console.log(json)
+                })
+                e.preventDefault();
+            })
+            
+        })
+        function showToast(title, params) {
+            $(".toast .toast-header").removeClass('bg-danger bg-success')
+            $(".toast .toast-header").addClass(title != 'SUCCESS' ? 'bg-danger':'bg-success')
+            $(".toast .toast-header strong").text(title);
+            $(".toast .toast-body").html(params);
+            $(".toast").show();
+            setTimeout(()=>{
+                $(".toast").hide();
+            }, 3000)
+        }
+    </script>
+</body>
+</html>
